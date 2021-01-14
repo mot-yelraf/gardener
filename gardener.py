@@ -13,7 +13,7 @@
 # There is also a local display on the Pi (for now the SSD1306)
 #
 # authored: tom wil farley 12Jan2021
-# version: 0.0.1
+# version: 0.0.2
 ########################################################################
 
 # General Python modules to import
@@ -85,6 +85,17 @@ def init_ssd1306():
   print ("Chip ID     : ", chip_id)
   print ("Version     : ", chip_version)
   
+# what is the quality of the soil moisture
+def qualitySoilMoisture (smp):
+    retVal = ""
+    if int(smp) < 40:
+        retVal = "dry"
+    elif smp >= 40 and smp < 80:
+        retVal = "wet"
+    else:
+        retVal = "mud"
+    return retVal
+  
 # definition of the main() routine
 def main():
 
@@ -99,6 +110,10 @@ def main():
 
   # this loop will run until ctrl-c is pressed
   while True:
+    # setup oled display
+    draw.rectangle((0,0,width,height), outline=0, fill=0)
+    disp.clear()
+    disp.display()
     # read the BME280 data
     temperature,pressure,humidity = bme280lib.readBME280All()
     # print BME280 data to terminal
@@ -107,10 +122,6 @@ def main():
     print("Humidity      : ", round(humidity,2), "%")
 
     # Write text to oled display.
-    draw.rectangle((0,0,width,height), outline=0, fill=0)
-    disp.clear()
-    disp.display()
-
     draw.text((x+4, top+4),       "Forging Our Futures" ,  font=font, fill=255)
     draw.text((x, top+16),       "Temperature : " + str(round(temperature,1)) + "C",  font=font, fill=255)
     draw.text((x, top+28),       "Humidity : " + str(round(humidity,1)) + "%",  font=font, fill=255)
@@ -120,27 +131,31 @@ def main():
     # Display image and wait for a couple of seconds before reading again.
     disp.image(image)
     disp.display()
-    time.sleep(2)
+    time.sleep(30)
     
-    # Read and display soil moisture sensor
-    sm = soilmoisture.read()
-    smp = round((sand - float(sm)),2)*(100/(sand - mud))
-    print("Soil Moisture : ", smp, "%")
-    print("Analog Raw    : ", sm)
-    # Write text to oled display.
+    # setup oled display
     draw.rectangle((0,0,width,height), outline=0, fill=0)
     disp.clear()
     disp.display()
-
+    # Read and display soil moisture sensor
+    sm = soilmoisture.read()
+    smp = round((sand - float(sm)),2)*(100/(sand - mud))
+    qsm = qualitySoilMoisture(smp) 
+    print("Soil Moisture : ", smp, "%")
+    print("Analog Raw    : ", sm)
+    print("Quality       : ", qsm)
+    
+    # Write text to oled display.
     draw.text((x+4, top+4),       "Forging Our Futures" ,  font=font, fill=255)
-    draw.text((x, top+28),       "Soil Moisture : " + str(smp) + "%",  font=font, fill=255)
-    draw.text((x, top+40),       "Analog Raw    : " + str(sm),  font=font, fill=255)
+    draw.text((x, top+16),       "Soil Moisture : " + str(smp) + "%",  font=font, fill=255)
+    draw.text((x, top+28),       "Analog Raw    : " + str(sm),  font=font, fill=255)
+    draw.text((x, top+40),       "Quality       : " + qsm,  font=font, fill=255)
     draw.text((x+12, top+56),     "the Future Forge", font=font, fill=255)
 
     # Display image and wait for a couple of seconds before reading again.
     disp.image(image)
     disp.display()
-    time.sleep(2)
+    time.sleep(30)
 
 if __name__=="__main__":
    main()
